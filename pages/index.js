@@ -8,12 +8,12 @@ import { userAgentFromString } from "next/server";
 import TextInput from "@/components/textinput";
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import {CanvasComponent} from "@/components/canvascomponent";
+import { CanvasComponent } from "@/components/canvascomponent";
 
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export default function Studio(){
+export default function Studio() {
 
     const [gltfModel, setGltfModel] = useState(null);
     const [isResultVisible, setIsResultVisible] = useState(null)
@@ -34,20 +34,20 @@ export default function Studio(){
         setIsResultVisible(false)
         setIsLoadingVisible(false)
 
-    },[]);
+    }, []);
 
 
     const handleDrop = (event) => {
         event.preventDefault();
-    
+
         const file = event.dataTransfer.files[0];
         if (file && file.name.endsWith('.glb')) {
             const reader = new FileReader();
-    
+
             reader.readAsArrayBuffer(file);
             reader.onload = (event) => {
                 const arrayBuffer = event.target.result;
-    
+
                 const loader = new GLTFLoader();
                 loader.parse(arrayBuffer, '', (gltf) => {
                     setGltfModel(gltf);
@@ -60,7 +60,7 @@ export default function Studio(){
             };
         }
     };
-    
+
 
     const getReplicateResults = async (image, mask) => {
 
@@ -73,77 +73,81 @@ export default function Studio(){
         }
 
         const response = await fetch("/api/predictions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            prompt: promptText + ", photorealistic, high resolution product photography, don't modify product",
-            negative_prompt: "blurry, painting, cartoon, abstract, ugly, deformed",
-            image: image,
-            mask: mask,
-            num_outputs: 4,
-            guidance_scale: 7.5,
-          }),
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                prompt: promptText + ", photorealistic, high resolution product photography, don't modify product",
+                negative_prompt: "blurry, painting, cartoon, abstract, ugly, deformed",
+                image: image,
+                mask: mask,
+                num_outputs: 4,
+                guidance_scale: 7.5,
+            }),
         });
         let prediction = await response.json();
         if (response.status !== 201) {
-          setError(prediction.detail);
-          return;
-        }
-        setPrediction(prediction);
-    
-        while (
-          prediction.status !== "succeeded" &&
-          prediction.status !== "failed"
-        ) {
-          await sleep(1000);
-          const response = await fetch("/api/predictions/" + prediction.id);
-          prediction = await response.json();
-          if (response.status !== 200) {
             setError(prediction.detail);
             return;
-          }
+        }
+        setPrediction(prediction);
 
-          if (prediction.status == "succeeded" && prediction.output) {
+        while (
+            prediction.status !== "succeeded" &&
+            prediction.status !== "failed"
+        ) {
+            await sleep(1000);
+            const response = await fetch("/api/predictions/" + prediction.id);
+            prediction = await response.json();
+            if (response.status !== 200) {
+                setError(prediction.detail);
+                return;
+            }
 
-            setIsResultVisible(true)
-            setIsLoadingVisible(false)
-          }
+            if (prediction.status == "succeeded" && prediction.output) {
 
-          console.log({prediction})
-          setPrediction(prediction);
+                setIsResultVisible(true)
+                setIsLoadingVisible(false)
+            }
+
+            console.log({ prediction })
+            setPrediction(prediction);
         }
     };
 
     async function generateImages() {
         console.log("Called the generate images function")
-    
+
         // Do something with the image data URL
         let snapshotImage = capture3DSnapshot()
 
         const formData = new FormData();
         formData.append('image', snapshotImage);
-        
+
         if (!snapshotImage) {
             console.log("image file is null")
         }
         // Generate base64 url image for remove bg
 
+        // const imgProcessURL = 'http://127.0.0.1:5000/get_item_mask';
+        const imgProcessURL = process.env.IMAGE_POSTPROCESS_URL;
+
+
         try {
 
-            const response = await fetch('http://127.0.0.1:5000/get_item_mask', {
-              method: 'POST',
-              body: formData
+            const response = await fetch(imgProcessURL, {
+                method: 'POST',
+                body: formData
             });
-    
+
             console.log(response)
             const data = await response.json();
             let maskBase64Url = `data:image/jpeg;base64,${data.ai_mask}`
 
             setIsResultVisible(false)
             let imageURLTemp = "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2940&q=80"
-            
+
             // Generate base64 image for input image.
             // Filereader converts a file blob into a base64 string
             const reader = new FileReader();
@@ -152,7 +156,7 @@ export default function Studio(){
                 const imageBase64Url = reader.result;
 
                 // now send a request to replicate
-                await getReplicateResults(imageBase64Url ,maskBase64Url)
+                await getReplicateResults(imageBase64Url, maskBase64Url)
 
             };
         } catch (error) {
@@ -166,11 +170,11 @@ export default function Studio(){
         const byteString = atob(parts[1]);
         const arrayBuffer = new ArrayBuffer(byteString.length);
         const uint8Array = new Uint8Array(arrayBuffer);
-      
+
         for (let i = 0; i < byteString.length; i++) {
-          uint8Array[i] = byteString.charCodeAt(i);
+            uint8Array[i] = byteString.charCodeAt(i);
         }
-      
+
         return new Blob([arrayBuffer], { type: mimeType });
     }
 
@@ -186,14 +190,14 @@ export default function Studio(){
         const link = document.createElement("a");
         link.setAttribute("download", "canvas.png");
         link.setAttribute(
-          "href",
-          canvasRef.toDataURL("image/png").replace("image/png", "image/octet-stream")
+            "href",
+            canvasRef.toDataURL("image/png").replace("image/png", "image/octet-stream")
         );
         link.click();
     };
 
 
-    return(
+    return (
         <div className={styles.page}>
             <div className={styles.inputPanel}>
                 <div className={styles.mainImageContainer}>
@@ -209,60 +213,60 @@ export default function Studio(){
                 <div><TextInput onTextChange={handleInputValueChange} /></div>
 
                 <div className={styles.buttonContainer}>
-                    <div 
+                    <div
                         className={styles.generateButton}
-                        onClick={()=>generateImages()}
+                        onClick={() => generateImages()}
                     >
-                            Generate Images
+                        Generate Images
                     </div>
                 </div>
             </div>
 
             <div className={styles.resultsPanel}>
-                {isResultVisible? (
+                {isResultVisible ? (
                     <>
-                    <div>
-                    {prediction.output && (
-                        <div className={styles.imageResultsContainer}>
-                            <div className={styles.imageWrapper}>
-                                <Image
-                                fill
-                                src={prediction.output[0]}
-                                alt="output"
-                                />
-                            </div>
-                            <div className={styles.imageWrapper}>
-                                <Image
-                                fill
-                                src={prediction.output[1]}
-                                alt="output"
-                                />
-                            </div>
-                            <div className={styles.imageWrapper}>
-                                <Image
-                                fill
-                                src={prediction.output[2]}
-                                alt="output"
-                                />
-                            </div>
-                            <div className={styles.imageWrapper}>
-                                <Image
-                                fill
-                                src={prediction.output[3]}
-                                alt="output"
-                                />
-                            </div>
+                        <div>
+                            {prediction.output && (
+                                <div className={styles.imageResultsContainer}>
+                                    <div className={styles.imageWrapper}>
+                                        <Image
+                                            fill
+                                            src={prediction.output[0]}
+                                            alt="output"
+                                        />
+                                    </div>
+                                    <div className={styles.imageWrapper}>
+                                        <Image
+                                            fill
+                                            src={prediction.output[1]}
+                                            alt="output"
+                                        />
+                                    </div>
+                                    <div className={styles.imageWrapper}>
+                                        <Image
+                                            fill
+                                            src={prediction.output[2]}
+                                            alt="output"
+                                        />
+                                    </div>
+                                    <div className={styles.imageWrapper}>
+                                        <Image
+                                            fill
+                                            src={prediction.output[3]}
+                                            alt="output"
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    )}  
-                    </div>
-                    
-                </>
+
+                    </>
                 ) : (
                     <></>
                 )}
                 {
-                    isLoadingVisible?
-                    (<p>Loading...</p>):(<></>)
+                    isLoadingVisible ?
+                        (<p>Loading...</p>) : (<></>)
                 }
 
             </div>
