@@ -131,7 +131,8 @@ export default function Studio() {
         // Generate base64 url image for remove bg
 
         // const imgProcessURL = 'http://127.0.0.1:5000/get_item_mask';
-        const imgProcessURL = process.env.IMAGE_POSTPROCESS_URL;
+        const imgProcessURL = $(process.env.IMAGE_POSTPROCESS_URL);
+        console.log(imgProcessURL);
 
 
         try {
