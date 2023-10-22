@@ -14,7 +14,8 @@ export default async function handler(req, res) {
       // inpainting
       //model: "andreasjansson/stable-diffusion-inpainting",
       // version: "e490d072a34a94a11e9711ed5a6ba621c3fab884eda1665d9d3a282d65a21180", // SD 1.5 inpainting
-      version: "f9bb0632bfdceb83196e85521b9b55895f8ff3d1d3b487fd1973210c0eb30bec", // SD v2 inpainting
+      // version: "f9bb0632bfdceb83196e85521b9b55895f8ff3d1d3b487fd1973210c0eb30bec", // SD v2 inpainting
+      version: "c11bac58203367db93a3c552bd49a25a5418458ddffb7e90dae55780765e26d6", // SD Official inpainting version
       // This is the text prompt that will be submitted by a form on the frontend
       input: req.body,
     }),
